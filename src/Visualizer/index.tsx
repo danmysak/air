@@ -56,7 +56,7 @@ function Visualizer({data}: Props) {
           </div>
         </>
       ) : (
-        <h2 className="visualizer_noData">Зараз повітряної тривоги немає.</h2>
+        <h2 className="visualizer_noData">На жаль, ми не можемо надати прогноз для поточної тривоги.</h2>
       )}
     </div>
   );
