@@ -1,5 +1,4 @@
 import {Loader} from 'semantic-ui-react';
-
 import {useData} from './useData';
 import Visualizer from './Visualizer';
 

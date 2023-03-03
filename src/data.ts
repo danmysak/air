@@ -1,4 +1,5 @@
 export type Data = {
-  pdf: number[],
+  time: Date,
+  density: number[],
   step: number,
 };

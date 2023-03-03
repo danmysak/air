@@ -1,38 +1,63 @@
-import {Header, Segment} from 'semantic-ui-react';
-
 import {Data} from '../data';
-import Graph from '../Graph';
+import Graph, {DataPoint} from '../Graph';
 import {computeProbabilities} from '../math';
 import './styles.css';
+
+const GRAPH_HEIGHT = 200;
+const DENSITY_COLOR = '#1C82AD';
+const PROBABILITY_COLOR = '#03C988';
 
 type Props = {
   data: Data
 };
 
+function generateDataPoints(values: number[], start: Date, step: number): DataPoint[] {
+  return values.map((value, index) => ({
+    value,
+    time: new Date(start.getTime() + index * step * 1000),
+  }));
+}
+
 function Visualizer({data}: Props) {
   return (
     <div className="visualizer">
-      <Header as="h1">Air raid alert duration predictor</Header>
-      <Segment className="visualizer_segment">
-        <Header as="h2">Probability density</Header>
-        <div className="visualizer_graph">
-          <Graph
-            data={data.pdf.map((value, index) => [index, value])}
-            height={100}
-            fill="#1C82AD"
-          />
-        </div>
-      </Segment>
-      <Segment className="visualizer_segment">
-        <Header as="h2">Cumulative probability</Header>
-        <div className="visualizer_graph">
-          <Graph
-            data={computeProbabilities(data.pdf, data.step).map((value, index) => [index, value])}
-            height={100}
-            fill="#03C988"
-          />
-        </div>
-      </Segment>
+      <h1>
+        Прогноз тривалості повітряної тривоги
+        <br />
+        <span className="visualizer_subcaption">Львівська область</span>
+      </h1>
+      {data.density.length > 1 ? (
+        <>
+          <div className="visualizer_segmentContainer">
+            <div className="visualizer_segment">
+              <h2>Густина ймовірності</h2>
+              <div className="visualizer_graph">
+                <Graph
+                  data={generateDataPoints(data.density, data.time, data.step)}
+                  height={GRAPH_HEIGHT}
+                  color={DENSITY_COLOR}
+                  showValues={false}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="visualizer_segmentContainer">
+            <div className="visualizer_segment">
+              <h2>Розподіл імовірностей</h2>
+              <div className="visualizer_graph">
+                <Graph
+                  data={generateDataPoints(computeProbabilities(data.density, data.step), data.time, data.step)}
+                  height={GRAPH_HEIGHT}
+                  color={PROBABILITY_COLOR}
+                  showValues={true}
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        <h2 className="visualizer_noData">Зараз повітряної тривоги немає.</h2>
+      )}
     </div>
   );
 }
