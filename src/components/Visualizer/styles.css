@@ -1,0 +1,17 @@
+.visualizer {
+    background-color: #F2F2F2;
+    padding: 20px 4%;
+}
+
+.visualizer_menuContainer {
+    width: max-content;
+    margin: auto;
+}
+
+.visualizer_graphContainer {
+    margin-top: 20px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

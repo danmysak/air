@@ -1,11 +1,15 @@
-html, body {
+html, body, #root {
   margin: 0;
   min-width: 320px;
+  height: 100%;
 }
 
-h1, h2 {
+.ui.header {
   text-align: center;
-  font-family: 'Oswald', sans-serif;
   font-weight: 400;
-  padding: 0 20px;
+  padding: 0 3ch;
+}
+
+.ui.message {
+  text-align: center;
 }
