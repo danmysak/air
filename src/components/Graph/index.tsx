@@ -67,6 +67,9 @@ function Graph({data, delimiter, height, color, xLabel, prominentValue}: Props) 
     const time = new Date(chart.scales.x.getValueForPixel(canvasPosition.x));
     return data.length > 0 && time >= data[0].time && time <= data[data.length - 1].time ? time : null;
   };
+  const updateChartCursor = (event: MouseEvent): void => {
+    chartRef.current.canvas.style.cursor = getRelevantTime(event) === null ? 'default' : 'pointer';
+  };
   return (
     <Chart
       ref={chartRef}
@@ -90,9 +93,8 @@ function Graph({data, delimiter, height, color, xLabel, prominentValue}: Props) 
           setPreProminentTime(time);
         }
       }}
-      onMouseMove={(event) => {
-        chartRef.current.canvas.style.cursor = getRelevantTime(event) === null ? 'default' : 'pointer';
-      }}
+      onMouseMove={updateChartCursor}
+      onMouseOver={updateChartCursor}
       options={{
         maintainAspectRatio: false,
         events: [], // disabling hover
