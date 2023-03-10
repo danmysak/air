@@ -32,7 +32,7 @@ function transformData(alert: ApiData<ApiAlert>, request: ApiRequestData, timeDe
   };
 }
 
-export function useData(placeId: number | null, attemptId: number): ApiState<Data> {
+export function useData(placeId: number | null, attemptId: number, minDelay: number = 0): ApiState<Data> {
   const [baseRequestId, setBaseRequestId] = useState(0);
   useIntervalUpdate(UPDATE_INTERVAL);
   useInterval(() => {
@@ -44,6 +44,7 @@ export function useData(placeId: number | null, attemptId: number): ApiState<Dat
       : process.env.REACT_APP_API_ENDPOINT_ALERT!.replaceAll(PLACE_PLACEHOLDER, placeId.toString()),
     baseRequestId + attemptId,
     (alert: ApiAlert) => alert,
+    minDelay,
   );
 
   const timeDelta = useFirst(

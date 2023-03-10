@@ -11,6 +11,7 @@ import './styles.css';
 
 type Props = {
   place: Place,
+  minDelay?: number,
 };
 
 const GRAPH_HEIGHT = 320;
@@ -28,9 +29,9 @@ const DENSITY = {
 };
 const MODES = [PROBABILITY, DENSITY];
 
-function Visualizer({place}: Props) {
+function Visualizer({place, minDelay}: Props) {
   const [alertRequestId, setAlertRequestId] = useState(0);
-  const alert = useData(place.id, alertRequestId);
+  const alert = useData(place.id, alertRequestId, minDelay ?? 0);
   const [mode, setMode] = useState(0);
 
   const getContent = (): [ReactNode, boolean] => {

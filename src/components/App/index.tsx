@@ -10,10 +10,19 @@ import PlaceSelector from '../PlaceSelector';
 import Visualizer from '../Visualizer';
 import './styles.css';
 
+const HEIGHT_ANIMATION_DURATION = 500;
+
 function App() {
   const [placesRequestId, setPlacesRequestId] = useState(0)
   const places = usePlaces(placesRequestId);
-  const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
+  type PlaceData = {
+    place: Place | null,
+    previousPlace: Place | null,
+  };
+  const [selectedPlace, setSelectedPlace] = useState<PlaceData>({
+    place: null,
+    previousPlace: null,
+  });
 
   const getContent = () => {
     if (places.loadingState === LoadingState.Loading) {
@@ -31,11 +40,16 @@ function App() {
           <Header as="h1">
             Прогноз тривалості повітряної тривоги
           </Header>
-          <PlaceSelector places={places.data.data} onPlaceSelected={(place) => setSelectedPlace(place)} />
-          <AnimateHeight height={selectedPlace ? 'auto' : 0}>
-            {selectedPlace && (
+          <PlaceSelector places={places.data.data} onPlaceSelected={(place) => setSelectedPlace((prev) => ({
+            place,
+            previousPlace: prev.place,
+          }))} />
+          <AnimateHeight height={selectedPlace.place ? 'auto' : 0} duration={HEIGHT_ANIMATION_DURATION}>
+            {selectedPlace.place && (
               <div className="app_visualizer">
-                <Visualizer place={selectedPlace} />
+                <Visualizer place={selectedPlace.place} minDelay={selectedPlace.previousPlace === null
+                  ? HEIGHT_ANIMATION_DURATION // so that animation does not jitter
+                  : 0} />
               </div>
             )}
           </AnimateHeight>
