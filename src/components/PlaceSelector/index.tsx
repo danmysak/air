@@ -14,6 +14,8 @@ function PlaceSelector({places, onPlaceSelected}: Props) {
         placeholder="Виберіть регіон"
         fluid
         selection
+        search
+        noResultsMessage="Регіонів не знайдено"
         options={places.map(({id, name}) => ({
           text: name,
           value: id,
