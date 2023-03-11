@@ -31,9 +31,9 @@ type Props = {
   xLabel: string,
   prominentValue?: {
     extractor: (time: Date) => number,
-    totalExtractor: (time: Date) => number,
     defaultTime: Date,
   },
+  showValues: boolean,
 };
 
 ChartJS.register(...registerables);
@@ -50,8 +50,7 @@ function formatProbability(probability: number): string {
   return `${Math.round(probability * 100)}%`;
 }
 
-function Graph({data, delimiter, height, color, xLabel, prominentValue}: Props) {
-  const showValues = !!prominentValue;
+function Graph({data, delimiter, height, color, xLabel, prominentValue, showValues}: Props) {
   const getBaseColor = (ctx: ScriptableLineSegmentContext) => delimiter === null || new Date(
     (data[ctx.p0DataIndex].time.getTime() + data[ctx.p1DataIndex].time.getTime()) / 2
   ) >= delimiter ? color: PAST_COLOR;
@@ -76,6 +75,22 @@ function Graph({data, delimiter, height, color, xLabel, prominentValue}: Props) 
   };
   const updateChartCursor = (event: MouseEvent) => {
     chartRef.current.canvas.style.cursor = getRelevantTime(event) === null ? 'default' : 'pointer';
+  };
+  const getRelativeValueAt = (time: Date) => {
+    if (data.length === 0 || time < data[0].time || time > data[data.length - 1].time) {
+      return 0;
+    }
+    let closest = data[0];
+    let max = data[0];
+    for (const item of data) {
+      if (Math.abs(item.time.getTime() - time.getTime()) < Math.abs(closest.time.getTime() - time.getTime())) {
+        closest = item;
+      }
+      if (item.value > max.value) {
+        max = item;
+      }
+    }
+    return closest.value / max.value;
   };
   return (
     <Chart
@@ -137,8 +152,8 @@ function Graph({data, delimiter, height, color, xLabel, prominentValue}: Props) 
             },
           },
         },
-        animation: {
-          duration: prominentMoving ? 0 : ANIMATION_DURATION,
+        animation: prominentMoving ? false : {
+          duration: ANIMATION_DURATION,
         },
         plugins: {
           annotation: {
@@ -159,7 +174,7 @@ function Graph({data, delimiter, height, color, xLabel, prominentValue}: Props) 
                   display: true,
                   content: [formatTime(prominentTime!), formatProbability(prominentValue.extractor(prominentTime!))],
                   backgroundColor: PROMINENT_LABEL_BACKGROUND,
-                  position: prominentValue.totalExtractor(prominentTime!) > 0.5 ? 'start' as const : 'end' as const,
+                  position: getRelativeValueAt(prominentTime!) > 0.5 ? 'start' as const : 'end' as const,
                 },
               }] : [])],
           },

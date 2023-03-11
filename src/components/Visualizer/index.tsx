@@ -17,17 +17,12 @@ type Props = {
 const GRAPH_HEIGHT = 320;
 const DEFAULT_VALUE_PROBABILITY = 0.5;
 
-const PROBABILITY = {
-  title: 'Розподіл імовірностей',
-  color: '#03C988',
-  semanticColor: 'green' as SemanticCOLORS,
-};
 const DENSITY = {
   title: 'Густина ймовірності',
   color: '#1C82AD',
   semanticColor: 'blue' as SemanticCOLORS,
 };
-const MODES = [PROBABILITY, DENSITY];
+const MODES = [DENSITY];
 
 function Visualizer({place, minDelay}: Props) {
   const [alertRequestId, setAlertRequestId] = useState(0);
@@ -72,29 +67,24 @@ function Visualizer({place, minDelay}: Props) {
         time: getTimeAtPosition(index),
       }));
 
-      const probabilities = mode === MODES.indexOf(PROBABILITY)
-        ? computeProbabilities(density.values, density.step)
-        : null;
+      const probabilities = computeProbabilities(density.values, density.step);
       const delimiterPosition = delimiter !== null ? getPositionOfTime(delimiter) : 0;
       return [(
         <Graph
-          data={constructGraphData(probabilities ?? density.values)}
+          data={constructGraphData(density.values)}
           delimiter={delimiter}
           height={GRAPH_HEIGHT}
-          color={probabilities ? PROBABILITY.color : DENSITY.color}
+          color={DENSITY.color}
           xLabel={xLabel}
-          prominentValue={
-            probabilities
-              ? {
-                  extractor: (time) => computeProbabilityAt(probabilities, getPositionOfTime(time), delimiterPosition),
-                  totalExtractor: (time) => computeProbabilityAt(probabilities, getPositionOfTime(time)),
-                  defaultTime: getTimeAtPosition(findProbabilityPosition(
-                    probabilities,
-                    DEFAULT_VALUE_PROBABILITY,
-                    delimiterPosition,
-                  )),
-              } : undefined
-          }
+          prominentValue={{
+            extractor: (time) => computeProbabilityAt(probabilities, getPositionOfTime(time), delimiterPosition),
+            defaultTime: getTimeAtPosition(findProbabilityPosition(
+              probabilities,
+              DEFAULT_VALUE_PROBABILITY,
+              delimiterPosition,
+            )),
+          }}
+          showValues={false}
         />
       ), true];
     }
