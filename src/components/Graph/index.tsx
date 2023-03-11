@@ -1,6 +1,6 @@
 import {Chart as ChartJS, registerables, ScriptableLineSegmentContext} from 'chart.js';
 import {getRelativePosition} from 'chart.js/helpers';
-import {MouseEvent, useRef, useState} from 'react';
+import {MouseEvent, TouchEvent, useRef, useState} from 'react';
 import {Chart} from 'react-chartjs-2'
 import 'chartjs-adapter-moment';
 import annotationPlugin from 'chartjs-plugin-annotation';
@@ -57,8 +57,9 @@ function Graph({data, delimiter, height, color, xLabel, prominentValue}: Props) 
   ) >= delimiter ? color: PAST_COLOR;
   const [preProminentTime, setPreProminentTime] = useState<Date | null>(null);
   const prominentTime = preProminentTime ?? prominentValue?.defaultTime ?? null;
+  const [prominentMoving, setProminentMoving] = useState(false);
   const chartRef = useRef<any>(null);
-  const getRelevantTime = (event: MouseEvent): Date | null => {
+  const getRelevantTime = (event: MouseEvent | TouchEvent): Date | null => {
     if (!prominentValue) {
       return null;
     }
@@ -67,7 +68,13 @@ function Graph({data, delimiter, height, color, xLabel, prominentValue}: Props) 
     const time = new Date(chart.scales.x.getValueForPixel(canvasPosition.x));
     return data.length > 0 && time >= data[0].time && time <= data[data.length - 1].time ? time : null;
   };
-  const updateChartCursor = (event: MouseEvent): void => {
+  const updateTimePosition = (event: MouseEvent | TouchEvent) => {
+    const time = getRelevantTime(event);
+    if (time !== null) {
+      setPreProminentTime(time);
+    }
+  };
+  const updateChartCursor = (event: MouseEvent) => {
     chartRef.current.canvas.style.cursor = getRelevantTime(event) === null ? 'default' : 'pointer';
   };
   return (
@@ -87,14 +94,12 @@ function Graph({data, delimiter, height, color, xLabel, prominentValue}: Props) 
           },
         }],
       }}
-      onClick={(event) => {
-        const time = getRelevantTime(event);
-        if (time !== null) {
-          setPreProminentTime(time);
-        }
-      }}
+      onClick={updateTimePosition}
+      onTouchMove={updateTimePosition}
       onMouseMove={updateChartCursor}
       onMouseOver={updateChartCursor}
+      onTouchStart={() => setProminentMoving(true)}
+      onTouchEnd={() => setProminentMoving(false)}
       options={{
         maintainAspectRatio: false,
         events: [], // disabling hover
@@ -133,7 +138,7 @@ function Graph({data, delimiter, height, color, xLabel, prominentValue}: Props) 
           },
         },
         animation: {
-          duration: ANIMATION_DURATION,
+          duration: prominentMoving ? 0 : ANIMATION_DURATION,
         },
         plugins: {
           annotation: {
