@@ -13,3 +13,7 @@ html, body, #root {
 .ui.message {
   text-align: center;
 }
+
+.ui.dropdown .menu {
+  max-height: 35vh !important; /* https://github.com/Semantic-Org/Semantic-UI/issues/5384#issuecomment-310713325 */
+}
