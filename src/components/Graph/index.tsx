@@ -4,6 +4,7 @@ import {MouseEvent, TouchEvent, useRef, useState} from 'react';
 import {Chart} from 'react-chartjs-2'
 import 'chartjs-adapter-moment';
 import annotationPlugin from 'chartjs-plugin-annotation';
+import {formatProbability, formatTime} from '../../helpers/formatters';
 import './styles.css';
 
 const LABEL_PERIOD_MINUTES = 5;
@@ -38,17 +39,6 @@ type Props = {
 
 ChartJS.register(...registerables);
 ChartJS.register(annotationPlugin);
-
-function formatTime(time: Date): string {
-  return [
-    time.getHours().toString(),
-    time.getMinutes().toString().padStart(2, '0'),
-  ].join(':');
-}
-
-function formatProbability(probability: number): string {
-  return `${Math.round(probability * 100)}%`;
-}
 
 function Graph({data, delimiter, height, color, xLabel, prominentValue, showValues}: Props) {
   const getBaseColor = (ctx: ScriptableLineSegmentContext) => delimiter === null || new Date(

@@ -14,6 +14,7 @@ export type ApiData<T> = {
     server: Date,
     client: Date,
   },
+  success: boolean,
   data: T,
 };
 
@@ -77,6 +78,7 @@ export function useApi<S, T>(
                   server: new Date(response.headers.get('date')!),
                   client: new Date(),
                 },
+                success: true,
                 data: fixedDataProcessor(json),
               },
             });

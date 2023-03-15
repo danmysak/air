@@ -1,7 +1,8 @@
 import assert from 'assert';
-import {Loader, Menu, SemanticCOLORS} from 'semantic-ui-react';
+import {Loader, Menu, Message, SemanticCOLORS} from 'semantic-ui-react';
 import {ReactNode, useState} from 'react';
 import {Place} from '../../types/data';
+import {formatTime} from '../../helpers/formatters';
 import {computeProbabilities, computeProbabilityAt, findProbabilityPosition} from '../../helpers/math';
 import {LoadingState} from '../../hooks/useApi';
 import {useData} from '../../hooks/useData';
@@ -29,21 +30,40 @@ function Visualizer({place, minDelay}: Props) {
   const alert = useData(place.id, alertRequestId, minDelay ?? 0);
   const [mode, setMode] = useState(0);
 
-  const getContent = (): [ReactNode, boolean] => {
+  type Content = {
+    mainContent: ReactNode,
+    graphAvailable: boolean,
+    infoBox: ReactNode,
+  };
+  const getContent = (): Content => {
     if (alert.loadingState === LoadingState.Loading) {
-      return [(
-        <Loader active={true} />
-      ), false];
+      return {
+        mainContent: <Loader active={true}/>,
+        graphAvailable: false,
+        infoBox: null,
+      };
     } else if (alert.loadingState === LoadingState.Error) {
-      return [(
-        <Error message="Втрачено зв’язок із сервером." onRetry={() => setAlertRequestId((id) => id + 1)} />
-      ), false];
+      return {
+        mainContent: <Error message="Втрачено зв’язок із сервером." onRetry={() => setAlertRequestId((id) => id + 1)}/>,
+        graphAvailable: false,
+        infoBox: null,
+      };
     } else {
       assert(alert.loadingState === LoadingState.Ok);
+      const infoBox = (
+        <div className="visualizer_infoBox">
+          <Message negative={!alert.data.success}>
+            дані: <strong>{formatTime(alert.data.dates.client)}</strong>
+          </Message>
+        </div>
+      );
+
       if (alert.data.data.density === null) {
-        return [(
-          <Error message="На жаль, ми не маємо надійної статистики тривог для даного регіону." />
-        ), false];
+        return {
+          mainContent: <Error message="На жаль, ми не маємо надійної статистики тривог для даного регіону."/>,
+          graphAvailable: false,
+          infoBox,
+        };
       }
 
       const density = alert.data.data.density;
@@ -55,9 +75,11 @@ function Visualizer({place, minDelay}: Props) {
       const getPositionOfTime = (time: Date) => (time.getTime() - start.getTime()) / stepMilliseconds;
 
       if (delimiter !== null && delimiter >= getTimeAtPosition(density.values.length - 1)) {
-        return [(
-          <Error message="Тривога у регіоні триває значно довше, ніж зазвичай." />
-        ), false];
+        return {
+          mainContent: <Error message="Тривога у регіоні триває значно довше, ніж зазвичай."/>,
+          graphAvailable: false,
+          infoBox,
+        };
       }
 
       const xLabel = alert.data.data.start ? 'Час закінчення тривоги' : 'Тривалість тривоги';
@@ -69,28 +91,30 @@ function Visualizer({place, minDelay}: Props) {
 
       const probabilities = computeProbabilities(density.values, density.step);
       const delimiterPosition = delimiter !== null ? getPositionOfTime(delimiter) : 0;
-      return [(
-        <Graph
-          data={constructGraphData(density.values)}
-          delimiter={delimiter}
-          height={GRAPH_HEIGHT}
-          color={DENSITY.color}
-          xLabel={xLabel}
-          prominentValue={{
-            extractor: (time) => computeProbabilityAt(probabilities, getPositionOfTime(time), delimiterPosition),
-            defaultTime: getTimeAtPosition(findProbabilityPosition(
-              probabilities,
-              DEFAULT_VALUE_PROBABILITY,
-              delimiterPosition,
-            )),
-          }}
-          showValues={false}
-        />
-      ), true];
+      return {
+        mainContent: <Graph
+            data={constructGraphData(density.values)}
+            delimiter={delimiter}
+            height={GRAPH_HEIGHT}
+            color={DENSITY.color}
+            xLabel={xLabel}
+            prominentValue={{
+              extractor: (time) => computeProbabilityAt(probabilities, getPositionOfTime(time), delimiterPosition),
+              defaultTime: getTimeAtPosition(findProbabilityPosition(
+                probabilities,
+                DEFAULT_VALUE_PROBABILITY,
+                delimiterPosition,
+              )),
+            }}
+            showValues={false}
+          />,
+        graphAvailable: true,
+        infoBox,
+      };
     }
   };
 
-  const [content, menuEnabled] = getContent();
+  const content = getContent();
   return (
     <div className="visualizer">
       <div className="visualizer_menuContainer">
@@ -98,8 +122,8 @@ function Visualizer({place, minDelay}: Props) {
           {MODES.map(({title, semanticColor}, index) => (
             <Menu.Item
               key={index}
-              disabled={!menuEnabled}
-              color={menuEnabled ? semanticColor : undefined}
+              disabled={!content.graphAvailable}
+              color={content.graphAvailable ? semanticColor : undefined}
               active={mode === index}
               onClick={() => setMode(index)}
             >{title}</Menu.Item>
@@ -107,7 +131,8 @@ function Visualizer({place, minDelay}: Props) {
         </Menu>
       </div>
       <div className="visualizer_graphContainer" style={{height: GRAPH_HEIGHT + 'px'}}>
-        {content}
+        {content.mainContent}
+        {content.infoBox}
       </div>
     </div>
   );
