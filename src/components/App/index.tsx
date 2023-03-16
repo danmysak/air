@@ -2,7 +2,6 @@ import assert from 'assert';
 import {Header, Loader} from 'semantic-ui-react';
 import {useState} from 'react';
 import AnimateHeight from 'react-animate-height';
-import {Place} from '../../types/data';
 import {LoadingState} from '../../hooks/useApi';
 import {usePlaces} from '../../hooks/usePlaces';
 import Error from '../Error';
@@ -11,18 +10,32 @@ import Visualizer from '../Visualizer';
 import './styles.css';
 
 const HEIGHT_ANIMATION_DURATION = 500;
+const PLACE_STORAGE_KEY = 'place';
+
+function getStoredPlace(): number | null {
+  const item = localStorage.getItem(PLACE_STORAGE_KEY);
+  if (item === null) {
+    return null;
+  }
+  const id = parseInt(item);
+  return isNaN(id) ? null : id;
+}
+
+function setStoredPlace(id: number): void {
+  localStorage.setItem(PLACE_STORAGE_KEY, id.toString());
+}
 
 function App() {
   const [placesRequestId, setPlacesRequestId] = useState(0)
   const places = usePlaces(placesRequestId);
   type PlaceData = {
-    place: Place | null,
-    previousPlace: Place | null,
+    place: number | null,
+    previousPlace: number | null,
   };
-  const [selectedPlace, setSelectedPlace] = useState<PlaceData>({
-    place: null,
+  const [selectedPlace, setSelectedPlace] = useState<PlaceData>(() => ({
+    place: getStoredPlace(),
     previousPlace: null,
-  });
+  }));
 
   const getContent = () => {
     if (places.loadingState === LoadingState.Loading) {
@@ -35,19 +48,27 @@ function App() {
       );
     } else {
       assert(places.loadingState === LoadingState.Ok);
+      const selectedPlaceData = places.data.data.find((place) => place.id === selectedPlace.place);
       return (
         <div className="app_home">
           <Header as="h1">
             Прогноз тривалості повітряної тривоги
           </Header>
-          <PlaceSelector places={places.data.data} onPlaceSelected={(place) => setSelectedPlace((prev) => ({
-            place,
-            previousPlace: prev.place,
-          }))} />
-          <AnimateHeight height={selectedPlace.place ? 'auto' : 0} duration={HEIGHT_ANIMATION_DURATION}>
-            {selectedPlace.place && (
+          <PlaceSelector
+            places={places.data.data}
+            selected={selectedPlaceData?.id}
+            onPlaceSelected={(place) => {
+              setStoredPlace(place.id);
+              setSelectedPlace({
+                place: place.id,
+                previousPlace: selectedPlaceData?.id ?? null,
+              });
+            }}
+          />
+          <AnimateHeight height={selectedPlaceData ? 'auto' : 0} duration={HEIGHT_ANIMATION_DURATION}>
+            {selectedPlaceData && (
               <div className="app_visualizer">
-                <Visualizer place={selectedPlace.place} minDelay={selectedPlace.previousPlace === null
+                <Visualizer place={selectedPlaceData} minDelay={selectedPlace.previousPlace === null
                   ? HEIGHT_ANIMATION_DURATION // so that animation does not jitter
                   : 0} />
               </div>

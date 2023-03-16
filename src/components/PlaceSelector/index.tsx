@@ -4,13 +4,15 @@ import './styles.css';
 
 type Props = {
   places: Place[],
+  selected?: number,
   onPlaceSelected: (place: Place) => void,
 };
 
-function PlaceSelector({places, onPlaceSelected}: Props) {
+function PlaceSelector({places, selected, onPlaceSelected}: Props) {
   return (
     <div className="placeSelector">
       <Dropdown
+        value={selected}
         placeholder="Виберіть регіон"
         fluid
         selection
