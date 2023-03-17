@@ -10,6 +10,8 @@ import {useIntervalUpdate} from './useIntervalUpdate';
 const PLACE_PLACEHOLDER = '{PLACE}';
 const UPDATE_INTERVAL = 1000;
 const REQUEST_INTERVAL = 60000;
+const EXTRA_ALERT_PARAMS_KEY = 'alert_extra';
+const EXTRA_ALERT_EQUALS = ':';
 
 function transformData(
   alert: ApiData<ApiAlert>,
@@ -41,10 +43,14 @@ export function useData(placeId: number | null, attemptId: number, minDelay: num
   useInterval(() => {
     setBaseRequestId(Math.random());
   }, REQUEST_INTERVAL);
+  const extra_alert_prefix = '#' + EXTRA_ALERT_PARAMS_KEY + EXTRA_ALERT_EQUALS;
   const alert = useApi(
     placeId === null
       ? null
-      : process.env.REACT_APP_API_ENDPOINT_ALERT!.replaceAll(PLACE_PLACEHOLDER, placeId.toString()),
+      : process.env.REACT_APP_API_ENDPOINT_ALERT!.replaceAll(PLACE_PLACEHOLDER, placeId.toString())
+      + (window.location.hash.startsWith(extra_alert_prefix)
+        ? '&' + window.location.hash.substring(extra_alert_prefix.length)
+        : ''),
     baseRequestId + attemptId,
     (alert: ApiAlert) => alert,
     minDelay,
